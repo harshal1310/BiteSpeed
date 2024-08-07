@@ -9,7 +9,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(express.static('public')); // Serve static files from the "public" directory
 
-app.get('/identity', (req, res) => {
+app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'check.html'));
 });
 
@@ -52,13 +52,14 @@ app.post('/identify', async (req, res) => {
         else {
             for (const contact of contacts) {
                 if (contact.id !== primaryContact.id) {
-                    console.log("inside")
+                
                     contact.linkedId = primaryContact.id;
                     contact.linkPrecedence = 'secondary';
                     await contact.save();
                 }
             }
-
+            const existingContact = contacts.find(c => c.email === email && c.phoneNumber === phoneNumber);
+            if (!existingContact) {
             // Create the new contact and link it to the primary contact
             const newContact = await Contact.create({
                 email,
@@ -66,8 +67,7 @@ app.post('/identify', async (req, res) => {
                 linkPrecedence: 'secondary',
                 linkedId: primaryContact.id
             });
-
-            
+        } 
         }
 
         // Create secondary contacts if needed
@@ -87,21 +87,24 @@ app.post('/identify', async (req, res) => {
             contacts
                 .filter(c => c.id !== primaryContact.id)
                 .map(c => c.email)
-                .filter(email => email) // Remove null/undefined emails
+                .filter(email => email) 
         );
-
         const allPhoneNumbers = [primaryContact.phoneNumber].concat(
             contacts
                 .filter(c => c.id !== primaryContact.id)
                 .map(c => c.phoneNumber)
-                .filter(phoneNumber => phoneNumber) // Remove null/undefined phone numbers
+                .filter(phoneNumber => phoneNumber) 
         );
+        const uniqueEmails = [...new Set(allEmails.filter(email => email.trim() !== ''))];
+        const uniquePhoneNumbers = [...new Set(allPhoneNumbers.filter(phoneNumber => phoneNumber.trim() !== ''))];
 
+        console.log(uniqueEmails)
+        console.log(uniquePhoneNumbers)
         res.json({
             contact: {
                 primaryContactId: primaryContact.id,
-                emails: allEmails,
-                phoneNumbers: allPhoneNumbers,
+                emails: uniqueEmails,
+                phoneNumbers: uniquePhoneNumbers,
                 secondaryContactIds
             }
         });

@@ -43,6 +43,14 @@
         .btn:hover {
             background-color: #0056b3;
         }
+        #response {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
@@ -79,7 +87,14 @@
 
             const result = await response.json();
             document.getElementById('response').innerText = JSON.stringify(result, null, 2);
+
+            
         });
+        window.onload = function() {
+            document.getElementById('email').value = '';
+            document.getElementById('phoneNumber').value = '';
+            document.getElementById('response').innerText = '';
+        };
     </script>
 </body>
 </html>
