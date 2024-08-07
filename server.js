@@ -30,7 +30,6 @@ app.post('/identify', async (req, res) => {
                 ]
             }
         });
-        console.log(contacts);
 
         let primaryContact = contacts.find(c => c.linkPrecedence === 'primary');
         
@@ -83,31 +82,41 @@ app.post('/identify', async (req, res) => {
             .filter(c => c.id !== primaryContact.id)
             .map(c => c.id);
 
-        const allEmails = [primaryContact.email].concat(
-            contacts
-                .filter(c => c.id !== primaryContact.id)
-                .map(c => c.email)
-                .filter(email => email) 
-        );
-        const allPhoneNumbers = [primaryContact.phoneNumber].concat(
-            contacts
-                .filter(c => c.id !== primaryContact.id)
-                .map(c => c.phoneNumber)
-                .filter(phoneNumber => phoneNumber) 
-        );
-        const uniqueEmails = [...new Set(allEmails.filter(email => email.trim() !== ''))];
-        const uniquePhoneNumbers = [...new Set(allPhoneNumbers.filter(phoneNumber => phoneNumber.trim() !== ''))];
+            const allContacts = await Contact.findAll({
+                where: {
+                    [Op.or]: [
+                        { email },
+                        { phoneNumber }
+                    ]
+                }
+            });
+    
+            const uniqueEmails = [
+                ...new Set(
+                    allContacts
+                        .map(c => c.email)
+                        .filter(email => email && email.trim() !== '') // Remove null/undefined and empty emails
+                )
+            ];
+    
+            const uniquePhoneNumbers = [
+                ...new Set(
+                    allContacts
+                        .map(c => c.phoneNumber)
+                        .filter(phoneNumber => phoneNumber && phoneNumber.trim() !== '') // Remove null/undefined and empty phone numbers
+                )
+            ];
+    
 
-        console.log(uniqueEmails)
-        console.log(uniquePhoneNumbers)
-        res.json({
-            contact: {
-                primaryContactId: primaryContact.id,
-                emails: uniqueEmails,
-                phoneNumbers: uniquePhoneNumbers,
-                secondaryContactIds
-            }
-        });
+            res.json({
+                contact: {
+                    primaryContactId: primaryContact.id,
+                    emails: uniqueEmails,
+                    phoneNumbers: uniquePhoneNumbers,
+                    secondaryContactIds
+                }
+            })
+
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');
@@ -119,3 +128,11 @@ sequelize.sync().then(() => {
     });
 });
 
+
+
+
+/*
+
+
+// Gather all unique emails and phone numbers
+   */
